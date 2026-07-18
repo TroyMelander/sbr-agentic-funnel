@@ -86,34 +86,30 @@ def closing_node(state: AgentState):
     return {"messages": [AIMessage(content=closure)], "current_phase": "complete"}
    
 def entry_router(state: AgentState):
-    # Check the state variable from the previous turn
+    messages = state.get("messages", [])
+    
+    # 1. Message History Check (Bulletproof for Streamlit)
+    if len(messages) >= 2:
+        # Get the previous AI message and the user's latest reply
+        last_ai_message = messages[-2]
+        latest_user_message = messages[-1]
+        
+        # Check if the AI just delivered the funnel pitch
+        if "Drop your email here" in last_ai_message.content:
+            # If the user replies with an email (or even if they say "no thanks"),
+            # immediately route them to the closing node to kill the loop.
+            return "route_to_close"
+            
+    # 2. Standard State Variable Check (For local terminal testing)
     current = state.get("current_phase")
     
     # If they are in the funnel, or already complete, hijack the routing
     if current == "funnel" or current == "complete":
         return "route_to_close"
     
-    # Otherwise, send them to the normal AI agent
+    # 3. Otherwise, send them to the normal AI agent
     return "route_to_agent"
     
-# 6. Build the Graph (The Conditional Routing Logic)
-workflow = StateGraph(AgentState)
-
-# Add all three of our distinct procedures
-workflow.add_node("agent", chat_node)
-workflow.add_node("funnel", funnel_node)
-workflow.add_node("closing", closing_node)
-
-# Step 1: The Entry Router decides who gets the user's message
-workflow.add_conditional_edges(
-    START,
-    entry_router,
-    {
-        "route_to_agent": "agent",
-        "route_to_close": "closing"
-    }
-)
-
 # Step 2: The Phase Router evaluates what the agent just said
 workflow.add_conditional_edges(
     "agent",
