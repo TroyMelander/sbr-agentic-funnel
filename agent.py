@@ -13,7 +13,7 @@ load_dotenv()
 api_key = os.getenv("GEMINI_API_KEY")
 
 # 2. Define the LLM (The Engine)
-llm = ChatGoogleGenerativeAI(model="gemini-3.1-flash-lite", google_api_key=api_key
+llm = ChatGoogleGenerativeAI(model="gemini-3.1-flash-lite", google_api_key=api_key)
 # 3. Define the Agent's Memory Schema (The 'Temporary Table')
 class AgentState(TypedDict):
     messages: Annotated[list, add_messages]
