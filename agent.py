@@ -107,9 +107,27 @@ def entry_router(state: AgentState):
     if current == "funnel" or current == "complete":
         return "route_to_close"
     
-    # 3. Otherwise, send them to the normal AI agent
+# 3. Otherwise, send them to the normal AI agent
     return "route_to_agent"
-    
+
+# 6. Build the Graph (The Conditional Routing Logic)
+workflow = StateGraph(AgentState)
+
+# Add all three of our distinct procedures
+workflow.add_node("agent", chat_node)
+workflow.add_node("funnel", funnel_node)
+workflow.add_node("closing", closing_node)
+
+# Step 1: The Entry Router decides who gets the user's message
+workflow.add_conditional_edges(
+    START,
+    entry_router,
+    {
+        "route_to_agent": "agent",
+        "route_to_close": "closing"
+    }
+)
+
 # Step 2: The Phase Router evaluates what the agent just said
 workflow.add_conditional_edges(
     "agent",
